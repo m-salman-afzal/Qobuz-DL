@@ -231,6 +231,36 @@ const SearchView = () => {
                         searching={searching}
                         setSearching={setSearching}
                         query={query}
+                        onDownloadMetadata={async (query: string) => {
+                            try {
+                                const response = await axios.post(`/api/store-music-metadata?q=${query}`);
+                                if (response.status === 200) {
+                                    console.log('Music metadata stored successfully');
+                                }
+                            } catch (error: any) {
+                                console.error(error?.response.data?.error || error.message || 'An error occurred.');
+                            }
+                        }}
+                        onDownloadUrl={async () => {
+                            try {
+                                const response = await axios.post(`/api/download-tracks-url`);
+                                if (response.status === 200) {
+                                    console.log('Tracks url downloaded successfully');
+                                }
+                            } catch (error: any) {
+                                console.error(error?.response.data?.error || error.message || 'An error occurred.');
+                            }
+                        }}
+                        onDownloadTracks={async () => {
+                            try {
+                                const response = await axios.post(`/api/download-tracks`);
+                                if (response.status === 200) {
+                                    console.log('Tracks downloaded successfully');
+                                }
+                            } catch (error: any) {
+                                console.error(error?.response.data?.error || error.message || 'An error occurred.');
+                            }
+                        }}
                     />
 
                     <DropdownMenu>

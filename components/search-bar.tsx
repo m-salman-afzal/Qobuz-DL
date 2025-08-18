@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useTransition } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "./ui/button";
-import { ArrowRightIcon, Loader2Icon, SearchIcon } from "lucide-react";
+import { ArrowDownIcon, ArrowRightIcon, Loader2Icon, SearchIcon } from "lucide-react";
 import { Label } from "./ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import axios from "axios";
@@ -11,12 +11,13 @@ import { getAlbum, QobuzAlbum, QobuzSearchResults, QobuzTrack } from "@/lib/qobu
 import { Skeleton } from "./ui/skeleton";
 import { AnimatePresence, motion } from "framer-motion";
 
-const SearchBar = ({ onSearch, searching, setSearching, query }: { onSearch: (query: string, searchFieldInput?: "albums" | "tracks") => void; searching: boolean; setSearching: React.Dispatch<React.SetStateAction<boolean>>, query: string }) => {
+const SearchBar = ({ onSearch, searching, setSearching, query, onDownloadMetadata, onDownloadUrl, onDownloadTracks }: { onSearch: (query: string, searchFieldInput?: "albums" | "tracks") => void; searching: boolean; setSearching: React.Dispatch<React.SetStateAction<boolean>>, query: string, onDownloadMetadata: (query: string) => void, onDownloadUrl: () => void, onDownloadTracks: () => void }) => {
     const [searchInput, setSearchInput] = useState(query);
     const [results, setResults] = useState<QobuzSearchResults | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [showCard, setShowCard] = useState(false);
     const [controller, setController] = useState<AbortController>(new AbortController());
+    const [isPendingDownload, startTranitionPendingDownload] = useTransition()
 
     const inputRef = useRef<HTMLInputElement>(null);
     const cardRef = useRef<HTMLDivElement>(null);
@@ -123,6 +124,55 @@ const SearchBar = ({ onSearch, searching, setSearching, query }: { onSearch: (qu
                 disabled={searching || !(searchInput.trim().length > 0)}
             >
                 {searching ? <Loader2Icon className="animate-spin" /> : <ArrowRightIcon />}
+            </Button>
+            <Button
+                
+                className="h-11 shrink-0 disabled:bg-muted bg-primary disabled:text-foreground text-primary-foreground hover:text-primary-foreground hover:bg-primary/90"
+                variant="ghost"
+                onClick={() => {
+                    startTranitionPendingDownload(()=>{
+
+                        if (searchInput.trim().length > 0 && !isPendingDownload) {
+                            onDownloadMetadata(searchInput.trim());
+                        }
+                    })
+                }}
+                disabled={isPendingDownload || !(searchInput.trim().length > 0)}
+            >
+                {isPendingDownload ? <Loader2Icon className="animate-spin" /> : <ArrowDownIcon />}
+                Download Metadata
+            </Button>
+            <Button
+                
+                className="h-11 shrink-0 disabled:bg-muted bg-primary disabled:text-foreground text-primary-foreground hover:text-primary-foreground hover:bg-primary/90"
+                variant="ghost"
+                onClick={() => {
+                    startTranitionPendingDownload(()=>{
+
+                        if (searchInput.trim().length > 0 && !isPendingDownload) {
+                            onDownloadUrl();
+                        }
+                    })
+                }}
+            >
+                { <ArrowDownIcon />}
+                Download Tracks Url
+            </Button>
+            <Button
+                
+                className="h-11 shrink-0 disabled:bg-muted bg-primary disabled:text-foreground text-primary-foreground hover:text-primary-foreground hover:bg-primary/90"
+                variant="ghost"
+                onClick={() => {
+                    startTranitionPendingDownload(()=>{
+
+                        if (searchInput.trim().length > 0 && !isPendingDownload) {
+                            onDownloadTracks();
+                        }
+                    })
+                }}
+            >
+                { <ArrowDownIcon />}
+                Download Tracks
             </Button>
 
             <AnimatePresence>
