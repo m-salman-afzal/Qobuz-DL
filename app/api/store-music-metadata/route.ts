@@ -7,7 +7,7 @@ const searchParamsSchema = z.object({
     q: z.string().min(1, "Query is required"),
 })
 
-const FETCH_LIMIT = 1;
+const FETCH_LIMIT = 500;
 
 export async function POST(request: NextRequest) {
     const params = Object.fromEntries(new URL(request.url).searchParams.entries());
@@ -15,7 +15,6 @@ export async function POST(request: NextRequest) {
         const { q } = searchParamsSchema.parse(params);
         let isAlbumItemFinished = false;
         let offset = 0;
-        let devCount = 0;
         const totalStats = {
             artists: 0,
             genres: 0,
@@ -26,11 +25,10 @@ export async function POST(request: NextRequest) {
 
         while (!isAlbumItemFinished) {
             const searchResults = await search(q, FETCH_LIMIT, offset);            
-            if (searchResults.albums.items.length === 0 || devCount > 10) {
+            if (searchResults.albums.items.length === 0) {
                 isAlbumItemFinished = true;
                 break;
             }
-            devCount++;
 
             // Store the search results in the database
             const stats = await MusicService.storeSearchResults(searchResults);
