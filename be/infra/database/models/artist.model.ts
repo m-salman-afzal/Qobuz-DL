@@ -1,15 +1,15 @@
 import {relations} from "drizzle-orm";
-import {integer, json, pgTable, varchar} from "drizzle-orm/pg-core";
+import {integer, text, sqliteTable} from "drizzle-orm/sqlite-core";
 
 import {albumModel} from "./album.model";
 import {baseModel} from "./base.model";
 
-export const artistModel = pgTable("artists", {
+export const artistModel = sqliteTable("artists", {
     ...baseModel("artist"),
-    name: varchar(),
+    name: text(),
     id: integer().unique(),
     albumsCount: integer(),
-    image: json().$type<{
+    image: text({ mode: "json" }).$type<{
         small: string;
         medium: string;
         large: string;

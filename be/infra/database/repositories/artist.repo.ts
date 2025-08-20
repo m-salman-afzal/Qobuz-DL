@@ -78,20 +78,32 @@ export class ArtistRepository {
 
   // Delete artist by sequential ID
   static async deleteById(sId: number): Promise<boolean> {
-    const result = await db.delete(artistModel).where(eq(artistModel.sId, sId));
-    return (result.rowCount ?? 0) > 0;
+    try {
+      await db.delete(artistModel).where(eq(artistModel.sId, sId));
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   // Delete artist by random UUID
   static async deleteByRandId(randId: string): Promise<boolean> {
-    const result = await db.delete(artistModel).where(eq(artistModel.randId, randId));
-    return (result.rowCount ?? 0) > 0;
+    try {
+      await db.delete(artistModel).where(eq(artistModel.randId, randId));
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   // Delete artist by Qobuz ID
   static async deleteByQobuzId(id: number): Promise<boolean> {
-    const result = await db.delete(artistModel).where(eq(artistModel.id, id));
-    return (result.rowCount ?? 0) > 0;
+    try {
+      await db.delete(artistModel).where(eq(artistModel.id, id));
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   // Check if artist exists by Qobuz ID

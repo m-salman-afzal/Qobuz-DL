@@ -106,26 +106,40 @@ export class TrackRepository {
 
   // Delete track by sequential ID
   static async deleteById(sId: number): Promise<boolean> {
-    const result = await db.delete(trackModel).where(eq(trackModel.sId, sId));
-    return (result.rowCount ?? 0) > 0;
+    try {
+      await db.delete(trackModel).where(eq(trackModel.sId, sId));
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   // Delete track by random UUID
   static async deleteByRandId(randId: string): Promise<boolean> {
-    const result = await db.delete(trackModel).where(eq(trackModel.randId, randId));
-    return (result.rowCount ?? 0) > 0;
+    try {
+      await db.delete(trackModel).where(eq(trackModel.randId, randId));
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   // Delete track by Qobuz ID
   static async deleteByQobuzId(id: number): Promise<boolean> {
-    const result = await db.delete(trackModel).where(eq(trackModel.id, id));
-    return (result.rowCount ?? 0) > 0;
+    try {
+      await db.delete(trackModel).where(eq(trackModel.id, id));
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   // Delete all tracks by album ID
   static async deleteByAlbumId(albumId: string): Promise<number> {
-    const result = await db.delete(trackModel).where(eq(trackModel.albumId, albumId));
-    return result.rowCount ?? 0;
+    // Count before deletion
+    const countBefore = await this.countByAlbumId(albumId);
+    await db.delete(trackModel).where(eq(trackModel.albumId, albumId));
+    return countBefore;
   }
 
   // Check if track exists by Qobuz ID

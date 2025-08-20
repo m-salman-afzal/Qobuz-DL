@@ -90,20 +90,32 @@ export class GenreRepository {
 
   // Delete genre by sequential ID
   static async deleteById(sId: number): Promise<boolean> {
-    const result = await db.delete(genreModel).where(eq(genreModel.sId, sId));
-    return (result.rowCount ?? 0) > 0;
+    try {
+      await db.delete(genreModel).where(eq(genreModel.sId, sId));
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   // Delete genre by random UUID
   static async deleteByRandId(randId: string): Promise<boolean> {
-    const result = await db.delete(genreModel).where(eq(genreModel.randId, randId));
-    return (result.rowCount ?? 0) > 0;
+    try {
+      await db.delete(genreModel).where(eq(genreModel.randId, randId));
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   // Delete genre by Qobuz ID
   static async deleteByQobuzId(id: number): Promise<boolean> {
-    const result = await db.delete(genreModel).where(eq(genreModel.id, id));
-    return (result.rowCount ?? 0) > 0;
+    try {
+      await db.delete(genreModel).where(eq(genreModel.id, id));
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   // Check if genre exists by Qobuz ID
@@ -127,6 +139,6 @@ export class GenreRepository {
   // Get all unique colors
   static async getAllColors(): Promise<string[]> {
     const results = await db.selectDistinct({ color: genreModel.color }).from(genreModel);
-    return results.map(r => r.color);
+    return results.map(r => r.color).filter((color): color is string => color !== null);
   }
 }

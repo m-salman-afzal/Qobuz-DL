@@ -78,20 +78,32 @@ export class LabelRepository {
 
   // Delete label by sequential ID
   static async deleteById(sId: number): Promise<boolean> {
-    const result = await db.delete(labelModel).where(eq(labelModel.sId, sId));
-    return (result.rowCount ?? 0) > 0;
+    try {
+      await db.delete(labelModel).where(eq(labelModel.sId, sId));
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   // Delete label by random UUID
   static async deleteByRandId(randId: string): Promise<boolean> {
-    const result = await db.delete(labelModel).where(eq(labelModel.randId, randId));
-    return (result.rowCount ?? 0) > 0;
+    try {
+      await db.delete(labelModel).where(eq(labelModel.randId, randId));
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   // Delete label by Qobuz ID
   static async deleteByQobuzId(id: number): Promise<boolean> {
-    const result = await db.delete(labelModel).where(eq(labelModel.id, id));
-    return (result.rowCount ?? 0) > 0;
+    try {
+      await db.delete(labelModel).where(eq(labelModel.id, id));
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   // Check if label exists by Qobuz ID

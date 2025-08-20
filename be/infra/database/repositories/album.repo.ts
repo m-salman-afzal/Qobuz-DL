@@ -86,14 +86,22 @@ export class AlbumRepository {
 
   // Delete album by sequential ID
   static async deleteById(sId: number): Promise<boolean> {
-    const result = await db.delete(albumModel).where(eq(albumModel.sId, sId));
-    return (result.rowCount ?? 0) > 0;
+    try {
+      await db.delete(albumModel).where(eq(albumModel.sId, sId));
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   // Delete album by random UUID
   static async deleteByRandId(randId: string): Promise<boolean> {
-    const result = await db.delete(albumModel).where(eq(albumModel.randId, randId));
-    return (result.rowCount ?? 0) > 0;
+    try {
+      await db.delete(albumModel).where(eq(albumModel.randId, randId));
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   // Check if album exists by Qobuz ID

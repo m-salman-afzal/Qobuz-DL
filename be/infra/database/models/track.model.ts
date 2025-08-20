@@ -1,42 +1,38 @@
 import {relations} from "drizzle-orm";
-import { integer, json, pgEnum, pgTable, uuid, varchar} from "drizzle-orm/pg-core";
+import { integer, text, sqliteTable} from "drizzle-orm/sqlite-core";
 
 import {albumModel} from "./album.model";
 import {baseModel} from "./base.model";
-
-export const uploadStatusEnum = pgEnum("uploadStatus", ["pending", "processing", "success", "failed"]);
-export const downloadStatusEnum = pgEnum("downloadStatus", ["pending", "processing", "success", "failed"]);
-export const trackModel = pgTable("tracks", {
+export const trackModel = sqliteTable("tracks", {
     ...baseModel("track"),
-    isrc: varchar(),
-    copyright: varchar(),
+    isrc: text(),
+    copyright: text(),
     maximumBitDepth: integer(),
-    maximumSamplingRate: varchar(),
-    performer: json()
+    maximumSamplingRate: text(),
+    performer: text({ mode: "json" })
         .$type<{
             name: string;
             id: number;
-        }>()
-        ,
-    composer: json().$type<{
+        }>(),
+    composer: text({ mode: "json" }).$type<{
         name: string;
         id: number;
     } | null>(),
-    albumId: uuid()
+    albumId: text()
         .references(() => albumModel.randId),
     trackNumber: integer(),
     releasedAt: integer(),
-    title: varchar(),
-    version: varchar(),
+    title: text(),
+    version: text(),
     duration: integer(),
     parentalWarning: integer(), // 0 = false, 1 = true
     id: integer().notNull().unique(),
     hires: integer(), // 0 = false, 1 = true
     streamable: integer(), // 0 = false, 1 = true
     mediaNumber: integer(),
-    downloadUrl: varchar(),
-    uploadStatus: uploadStatusEnum().default("pending"),
-    downloadStatus: downloadStatusEnum().default("pending"),
+    downloadUrl: text(),
+    uploadStatus: text().default("pending").$type<"pending" | "processing" | "success" | "failed">(),
+    downloadStatus: text().default("pending").$type<"pending" | "processing" | "success" | "failed">(),
 });
 
 export const trackModelRelations = relations(trackModel, ({one}) => ({
