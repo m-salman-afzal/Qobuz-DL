@@ -2,6 +2,7 @@ import axios from 'axios';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { TrackRepository,  TrackWithAlbumAndArtistAndGenre } from '../infra/database/repositories/track.repository';
+import { MusicUrlService } from './musicUrl.service';
 
 export class MusicDownloadService {
     private static downloadsDir = path.join(process.cwd(), 'downloads');
@@ -55,7 +56,6 @@ export class MusicDownloadService {
                     // Download URL expired, refresh it and try again
                     console.warn(`Download URL expired for track ${track.tracks.id}, refreshing URL...`);
                     // Dynamically import MusicUrlService to avoid circular dependency
-                    const { MusicUrlService } = await import('./musicUrl.service');
                     const urlResult = await MusicUrlService.getDownloadUrl({ track_id: track.tracks.id, quality: "27" });
                     if (urlResult.success && urlResult.data?.url) {
                         // Update the track's downloadUrl in memory for this attempt
