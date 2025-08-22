@@ -1,10 +1,21 @@
 import { eq, and, isNull, not } from "drizzle-orm";
 import { db } from "../connection";
 import { trackModel } from "../models/track.model";
+import { albumModel, artistModel, genreModel } from "../models";
+import { AlbumData } from "./album.repo";
+import { ArtistData } from "./artist.repo";
+import { GenreData } from "./genre.repo";
 
 export type CreateTrackData = typeof trackModel.$inferInsert;
 export type TrackData = typeof trackModel.$inferSelect;
 export type UpdateTrackData = Partial<Omit<CreateTrackData, 'sId' | 'randId' | 'createdAt'>>;
+
+export type TrackWithAlbumAndArtistAndGenre = {
+  tracks: TrackData | null;
+  albums: AlbumData | null;
+  artists: ArtistData | null;
+  genres: GenreData | null;
+};
 
 export class TrackRepository {
   // Create a new track
@@ -214,8 +225,8 @@ export class TrackRepository {
   }
 
   // Find tracks with pending download status
-  static async findPendingDownloads(): Promise<TrackData[]> {
-    return await db.select().from(trackModel)
+  static async findPendingDownloads() {
+    return await db.select().from(trackModel).leftJoin(albumModel, eq(trackModel.albumId, albumModel.randId)).leftJoin(artistModel, eq(albumModel.artistId, artistModel.randId)).leftJoin(genreModel, eq(albumModel.genreId, genreModel.randId))
       .where(and(eq(trackModel.downloadStatus, 'pending'), not(isNull(trackModel.downloadUrl))));
   }
 

@@ -1,10 +1,7 @@
 import axios from 'axios';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { TrackRepository, TrackData } from '../infra/database/repositories/track.repository';
-
-
-
+import { TrackRepository,  TrackWithAlbumAndArtistAndGenre } from '../infra/database/repositories/track.repository';
 
 export class MusicDownloadService {
     private static downloadsDir = path.join(process.cwd(), 'downloads');
@@ -23,51 +20,78 @@ export class MusicDownloadService {
     /**
      * Download and save a single track
      */
-    private static async downloadTrack(track: TrackData): Promise<boolean> {
+    private static async downloadTrack(track: TrackWithAlbumAndArtistAndGenre): Promise<boolean> {
+        if (!track.tracks) {
+            throw new Error('Track not found');
+        }
+
+        // This helper function removes characters that are invalid in file or folder names (such as < > : " / \ | ? * and control characters)
+        // and also collapses multiple spaces into a single space, then trims leading/trailing whitespace.
+        function sanitizeName(name: string): string {
+            return name.replace(/[<>:"/\\|?*\x00-\x1F]/g, '').replace(/\s+/g, ' ').trim();
+        }
+
         try {
-            console.log(`Starting download for track ID: ${track.id}`);
+            console.log(`Starting download for track ID: ${track.tracks.id}`);
             
             // Update status to processing
-            await TrackRepository.updateDownloadStatus(track.id, 'processing');
-            console.log(`Updated track ${track.id} status to processing`);
+            await TrackRepository.updateDownloadStatus(track.tracks?.id || 0, 'processing');
+            console.log(`Updated track ${track.tracks?.id} status to processing`);
 
             // Download the file
-            if (!track.downloadUrl) {
-                throw new Error(`No download URL found for track ${track.id}`);
+            if (!track.tracks.downloadUrl) {
+                throw new Error(`No download URL found for track ${track.tracks.id}`);
             }
 
-            const response = await axios.get(track.downloadUrl, {
+            const response = await axios.get(track.tracks.downloadUrl, {
                 responseType: 'arraybuffer',
                 timeout: 300000, // 5 minute timeout
             });
 
-            console.log(`Downloaded ${response.data.byteLength} bytes for track ${track.id}`);
+            console.log(`Downloaded ${response.data.byteLength} bytes for track ${track.tracks.id}`);
 
             // Ensure downloads directory exists
             await this.ensureDownloadsDir();
 
-            // Save file as {trackRandId}.flac
-            const fileName = `${track.randId}.flac`;
-            const filePath = path.join(this.downloadsDir, fileName);
-            
+            // Prepare folder and file names
+            const albumTitle = track.albums?.title ? sanitizeName(track.albums.title) : 'Unknown Album';
+            const artistName = track.artists?.name ? sanitizeName(track.artists.name) : 'Unknown Artist';
+            const genreName = track.genres?.name ? sanitizeName(track.genres.name) : 'Unknown Genre';
+            const trackTitle = track.tracks.title ? sanitizeName(track.tracks.title) : `Track_${track.tracks.id}`;
+
+            // Folder: "album title --- artist name --- genre"
+            const folderName = `${albumTitle} --- ${artistName} --- ${genreName}`;
+            const folderPath = path.join(this.downloadsDir, folderName);
+
+            // Ensure the album/artist/genre folder exists
+            try {
+                await fs.access(folderPath);
+            } catch {
+                await fs.mkdir(folderPath, { recursive: true });
+            }
+
+            // File: "track title.flac"
+            const fileName = `${trackTitle}.flac`;
+            const filePath = path.join(folderPath, fileName);
+
             await fs.writeFile(filePath, Buffer.from(response.data));
-            console.log(`Saved track ${track.id} to ${filePath}`);
+            console.log(`Saved track ${track.tracks.id} to ${filePath}`);
 
             // Update status to downloaded/success
-            await TrackRepository.updateDownloadStatus(track.id, 'success');
-            console.log(`Updated track ${track.id} status to success`);
+            await TrackRepository.updateDownloadStatus(track.tracks.id, 'success');
+            console.log(`Updated track ${track.tracks.id} status to success`);
 
             return true;
 
         } catch (error) {
-            console.error(`Error downloading track ${track.id}:`, error);
+            console.error(`Error downloading track ${track.tracks.id}:`, error);
             
             // Update status to failed
             try {
-                await TrackRepository.updateDownloadStatus(track.id, 'failed');
-                console.log(`Updated track ${track.id} status to failed`);
+                await TrackRepository.updateDownloadStatus(track.tracks.id, 'failed');
+                console.log(`Updated track ${track.tracks.id} status to failed`);
             } catch (updateError) {
-                console.error(`Failed to update track ${track.id} status to failed:`, updateError);
+                console.error(`Failed to update track ${track.tracks.id} status to failed:`, updateError);
             }
             
             return false;
@@ -102,22 +126,22 @@ export class MusicDownloadService {
             // Process each track
             for (const track of pendingTracks) {
                 processed++;
-                console.log(`Processing track ${processed}/${pendingTracks.length}: ID ${track.id}`);
+                console.log(`Processing track ${processed}/${pendingTracks.length}: ID ${track.tracks.id}`);
 
                 try {
                     const success = await this.downloadTrack(track);
                     if (success) {
                         successful++;
-                        console.log(`Successfully downloaded track ${track.id}`);
+                        console.log(`Successfully downloaded track ${track.tracks.id}`);
                     } else {
                         failed++;
-                        const errorMsg = `Failed to download track ${track.id}`;
+                        const errorMsg = `Failed to download track ${track.tracks.id}`;
                         console.error(errorMsg);
                         errors.push(errorMsg);
                     }
                 } catch (error) {
                     failed++;
-                    const errorMsg = `Error processing track ${track.id}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+                    const errorMsg = `Error processing track ${track.tracks.id}: ${error instanceof Error ? error.message : 'Unknown error'}`;
                     console.error(errorMsg);
                     errors.push(errorMsg);
                 }
@@ -144,25 +168,6 @@ export class MusicDownloadService {
         };
     }
 
-    /**
-     * Download a specific track by its Qobuz ID
-     */
-    static async downloadTrackById(qobuzId: number): Promise<boolean> {
-        try {
-            console.log(`Looking for track with Qobuz ID: ${qobuzId}`);
-            
-            const track = await TrackRepository.findByQobuzId(qobuzId);
-            if (!track) {
-                console.error(`Track with Qobuz ID ${qobuzId} not found in database`);
-                return false;
-            }
-
-            return await this.downloadTrack(track);
-        } catch (error) {
-            console.error(`Error downloading track by ID ${qobuzId}:`, error);
-            return false;
-        }
-    }
 
     /**
      * Get download statistics

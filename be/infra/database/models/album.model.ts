@@ -24,7 +24,7 @@ export const albumModel = sqliteTable("albums", {
                 roles: string[];
             }[]
         >(),
-    releasedAt: integer(),
+    releasedAt: text(),
     labelId: text()
         .references(() => labelModel.randId),
     title: text(),
