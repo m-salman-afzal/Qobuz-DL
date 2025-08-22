@@ -35,13 +35,18 @@ export class MusicUrlService {
         storeInDb: boolean = true
     ): Promise<DownloadMusicResult> {
         try {
+            console.log("[getDownloadUrl] Received params:", params, "storeInDb:", storeInDb);
+
             // Validate input parameters
             const { track_id, quality } = downloadParamsSchema.parse(params);
-            
+            console.log(`[getDownloadUrl] Parsed params - track_id: ${track_id}, quality: ${quality}`);
+
             // Get download URL from Qobuz
             const url = await getDownloadURL(track_id, quality);
-            
+            console.log(`[getDownloadUrl] Download URL from Qobuz for track_id ${track_id}, quality ${quality}:`, url);
+
             if (!url) {
+                console.error(`[getDownloadUrl] Failed to retrieve download URL from Qobuz for track_id ${track_id}, quality ${quality}`);
                 return {
                     success: false,
                     error: "Failed to retrieve download URL from Qobuz"
@@ -53,29 +58,33 @@ export class MusicUrlService {
                 try {
                     // Check if track exists in database
                     const existingTrack = await TrackRepository.findByQobuzId(track_id);
-                    
+                    console.log(`[getDownloadUrl] TrackRepository.findByQobuzId(${track_id}) result:`, existingTrack);
+
                     if (existingTrack) {
                         // Update existing track with download URL
                         await TrackRepository.updateByQobuzId(track_id, {
                             downloadUrl: url
                         });
+                        console.log(`[getDownloadUrl] Updated track ${track_id} with downloadUrl.`);
                     } else {
                         // If track doesn't exist, we could create a minimal record
                         // but for now we'll just proceed without storing
-                        console.warn(`Track with Qobuz ID ${track_id} not found in database. URL not stored.`);
+                        console.warn(`[getDownloadUrl] Track with Qobuz ID ${track_id} not found in database. URL not stored.`);
                     }
                 } catch (dbError) {
                     // Log database error but don't fail the request
-                    console.error("Error storing download URL in database:", dbError);
+                    console.error("[getDownloadUrl] Error storing download URL in database:", dbError);
                 }
             }
 
+            console.log(`[getDownloadUrl] Returning success for track_id ${track_id}`);
             return {
                 success: true,
                 data: { url }
             };
 
         } catch (error: any) {
+            console.error("[getDownloadUrl] Error occurred:", error);
             return {
                 success: false,
                 error: error?.errors || error.message || "An error occurred processing the download request."
