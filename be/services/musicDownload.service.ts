@@ -43,10 +43,35 @@ export class MusicDownloadService {
                 throw new Error(`No download URL found for track ${track.tracks.id}`);
             }
 
-            const response = await axios.get(track.tracks.downloadUrl, {
-                responseType: 'arraybuffer',
-                timeout: 300000, // 5 minute timeout
-            });
+            // Try to download the file, and if we get a 410 (Gone), refresh the downloadUrl and try again
+            let response;
+            try {
+                response = await axios.get(track.tracks.downloadUrl, {
+                    responseType: 'arraybuffer',
+                    timeout: 300000, // 5 minute timeout
+                });
+            } catch (error: any) {
+                if (error.response && error.response.status === 410) {
+                    // Download URL expired, refresh it and try again
+                    console.warn(`Download URL expired for track ${track.tracks.id}, refreshing URL...`);
+                    // Dynamically import MusicUrlService to avoid circular dependency
+                    const { MusicUrlService } = await import('./musicUrl.service');
+                    const urlResult = await MusicUrlService.getDownloadUrl({ track_id: track.tracks.id, quality: "27" });
+                    if (urlResult.success && urlResult.data?.url) {
+                        // Update the track's downloadUrl in memory for this attempt
+                        track.tracks.downloadUrl = urlResult.data.url;
+                        // Try downloading again with the new URL
+                        response = await axios.get(track.tracks.downloadUrl, {
+                            responseType: 'arraybuffer',
+                            timeout: 300000,
+                        });
+                    } else {
+                        throw new Error(`Failed to refresh download URL for track ${track.tracks.id}: ${urlResult.error}`);
+                    }
+                } else {
+                    throw error;
+                }
+            }
 
             console.log(`Downloaded ${response.data.byteLength} bytes for track ${track.tracks.id}`);
 
