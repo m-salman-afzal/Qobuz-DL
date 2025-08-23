@@ -154,7 +154,7 @@ export class MusicMetadataService {
     private static async processAlbum(qobuzAlbum: any, artistId: string, genreId: string, labelId: string) {
         let album = await AlbumRepository.findByQobuzId(qobuzAlbum.qobuz_id);
 
-        let tracks: any = [];
+        let tracks: any = null;
         let fullAlbumData: any = null;
         if (qobuzAlbum.url) {
             const {trackItems, ...restAlbumData} = await getAlbumInfo(qobuzAlbum.url.split("/").pop()!);
@@ -182,9 +182,13 @@ export class MusicMetadataService {
             });
             console.log(`Album updated: ${album?.data?.title} (rId: ${album?.rId})`);
         }
-        for (const track of tracks) {
-            await this.processTrack(track, album!.rId);
+
+        if (tracks) {
+            for (const track of tracks) {
+                await this.processTrack(track, album!.rId);
+            }
         }
+
         return album!;
     }
 
