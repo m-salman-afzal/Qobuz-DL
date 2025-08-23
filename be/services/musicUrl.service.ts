@@ -1,12 +1,9 @@
-import { getDownloadURL } from "@/lib/qobuz-dl";
-import { TrackRepository } from "../infra/database/repositories/track.repository";
+import {getDownloadURL} from "@/lib/qobuz-dl";
+import {TrackRepository} from "../infra/database/repositories/track.repository";
 import z from "zod";
 
 const downloadParamsSchema = z.object({
-    track_id: z.preprocess(
-        (a) => parseInt(a as string),
-        z.number().min(0, "ID must be 0 or greater").default(1)
-    ),
+    track_id: z.preprocess((a) => parseInt(a as string), z.number().min(0, "ID must be 0 or greater").default(1)),
     quality: z.enum(["27", "7", "6", "5"]).default("27")
 });
 
@@ -24,65 +21,26 @@ export type DownloadMusicResult = {
 };
 
 export class MusicUrlService {
-    /**
-     * Get download URL for a track and optionally store it in the database
-     * @param params - Track ID and quality parameters
-     * @param storeInDb - Whether to store the URL in the track table (default: true)
-     * @returns Download URL and success status
-     */
-    static async getDownloadUrl(
-        params: DownloadMusicParams, 
-        storeInDb: boolean = true
-    ): Promise<DownloadMusicResult> {
+    static async getDownloadUrl(params: DownloadMusicParams): Promise<DownloadMusicResult> {
         try {
-            console.log("[getDownloadUrl] Received params:", params, "storeInDb:", storeInDb);
+            const {track_id, quality} = downloadParamsSchema.parse(params);
 
-            // Validate input parameters
-            const { track_id, quality } = downloadParamsSchema.parse(params);
-            console.log(`[getDownloadUrl] Parsed params - track_id: ${track_id}, quality: ${quality}`);
-
-            // Get download URL from Qobuz
             const url = await getDownloadURL(track_id, quality);
-            console.log(`[getDownloadUrl] Download URL from Qobuz for track_id ${track_id}, quality ${quality}:`, url);
 
             if (!url) {
-                console.error(`[getDownloadUrl] Failed to retrieve download URL from Qobuz for track_id ${track_id}, quality ${quality}`);
+                console.error(
+                    `[getDownloadUrl] Failed to retrieve download URL from Qobuz for track_id ${track_id}, quality ${quality}`
+                );
                 return {
                     success: false,
                     error: "Failed to retrieve download URL from Qobuz"
                 };
             }
 
-            // Store URL in database if requested
-            if (storeInDb) {
-                try {
-                    // Check if track exists in database
-                    const existingTrack = await TrackRepository.findByQobuzId(track_id);
-                    console.log(`[getDownloadUrl] TrackRepository.findByQobuzId(${track_id}) result:`, existingTrack);
-
-                    if (existingTrack) {
-                        // Update existing track with download URL
-                        await TrackRepository.updateByQobuzId(track_id, {
-                            downloadUrl: url
-                        });
-                        console.log(`[getDownloadUrl] Updated track ${track_id} with downloadUrl.`);
-                    } else {
-                        // If track doesn't exist, we could create a minimal record
-                        // but for now we'll just proceed without storing
-                        console.warn(`[getDownloadUrl] Track with Qobuz ID ${track_id} not found in database. URL not stored.`);
-                    }
-                } catch (dbError) {
-                    // Log database error but don't fail the request
-                    console.error("[getDownloadUrl] Error storing download URL in database:", dbError);
-                }
-            }
-
-            console.log(`[getDownloadUrl] Returning success for track_id ${track_id}`);
             return {
                 success: true,
-                data: { url }
+                data: {url}
             };
-
         } catch (error: any) {
             console.error("[getDownloadUrl] Error occurred:", error);
             return {
@@ -92,11 +50,10 @@ export class MusicUrlService {
         }
     }
 
-
     static async findByDownloadStatusAndDownloadUrl() {
-        const tracks = await TrackRepository.findByDownloadStatusAndDownloadUrl("pending");
+        const tracks = await TrackRepository.findByDownloadStatusAndDownloadUrl("PENDING");
         for (const track of tracks) {
-             await this.getDownloadUrl({ track_id: track.id, quality: "27" });
+            await this.getDownloadUrl({track_id: track.data?.id ?? 0, quality: "27"});
         }
 
         return tracks;
