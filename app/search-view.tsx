@@ -333,6 +333,20 @@ const SearchView = () => {
                                 console.error(error?.response.data?.error || error.message || "An error occurred.");
                             }
                         }}
+                        onDownloadAlbums={async (albumCountToDownload: number) => {
+                            try {
+                                const response = await axios.post(`/api/download-albums`, {
+                                    albumCountToDownload: albumCountToDownload
+                                });
+                                if (response.status === 200) {
+                                    console.log("Albums downloaded successfully");
+                                }
+                            } catch (error: any) {
+                                console.error(error?.response.data?.error || error.message || "An error occurred.");
+                            } finally {
+                                setSearching(false);
+                            }
+                        }}
                     />
 
                     <DropdownMenu>

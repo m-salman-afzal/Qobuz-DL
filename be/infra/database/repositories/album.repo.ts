@@ -56,4 +56,27 @@ export class AlbumRepository {
             .where(sql`data->>'qobuz_id' = ${id}`);
         return !!album;
     }
+
+    static async findAlbumsByDownloadStatus(
+        status: "PENDING" | "PROCESSING" | "SUCCESS" | "FAILED",
+        albumCountToDownload: number
+    ): Promise<AlbumData[]> {
+        return await db
+            .select()
+            .from(albumModel)
+            .where(eq(albumModel.downloadStatus, status))
+            .limit(albumCountToDownload);
+    }
+
+    static async updateDownloadStatus(
+        id: number,
+        status: "PENDING" | "PROCESSING" | "SUCCESS" | "FAILED"
+    ): Promise<AlbumData | null> {
+        const [album] = await db
+            .update(albumModel)
+            .set({downloadStatus: status})
+            .where(sql`data->>'qobuz_id' = ${id}`)
+            .returning();
+        return album || null;
+    }
 }

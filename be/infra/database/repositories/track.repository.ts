@@ -87,4 +87,34 @@ export class TrackRepository {
             .returning();
         return track || null;
     }
+
+    static async findTracksByAlbumId(albumId: string): Promise<TrackWithAlbumAndArtistAndGenre[]> {
+        return await db
+            .select()
+            .from(trackModel)
+            .leftJoin(albumModel, eq(trackModel.albumId, albumModel.rId))
+            .leftJoin(artistModel, eq(albumModel.artistId, artistModel.rId))
+            .leftJoin(genreModel, eq(albumModel.genreId, genreModel.rId))
+            .where(eq(trackModel.albumId, albumId));
+    }
+
+    static async findTracksByAlbumRId(albumRId: string): Promise<TrackWithAlbumAndArtistAndGenre[]> {
+        return await db
+            .select()
+            .from(trackModel)
+            .leftJoin(albumModel, eq(trackModel.albumId, albumModel.rId))
+            .leftJoin(artistModel, eq(albumModel.artistId, artistModel.rId))
+            .leftJoin(genreModel, eq(albumModel.genreId, genreModel.rId))
+            .where(eq(trackModel.albumId, albumRId));
+    }
+
+    static async findTracksByAlbumQobuzId(qobuzId: number): Promise<TrackWithAlbumAndArtistAndGenre[]> {
+        return await db
+            .select()
+            .from(trackModel)
+            .leftJoin(albumModel, eq(trackModel.albumId, albumModel.rId))
+            .leftJoin(artistModel, eq(albumModel.artistId, artistModel.rId))
+            .leftJoin(genreModel, eq(albumModel.genreId, genreModel.rId))
+            .where(sql`albums.data->>'qobuz_id' = ${qobuzId}`);
+    }
 }

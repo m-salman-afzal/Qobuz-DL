@@ -17,7 +17,8 @@ const SearchBar = ({
     setSearching,
     query,
     onDownloadMetadata,
-    onDownloadTracks
+    onDownloadTracks,
+    onDownloadAlbums
 }: {
     onSearch: (query: string, searchFieldInput?: "albums" | "tracks") => void;
     searching: boolean;
@@ -25,6 +26,7 @@ const SearchBar = ({
     query: string;
     onDownloadMetadata: (query: string) => void;
     onDownloadTracks: () => void;
+    onDownloadAlbums: (albumCountToDownload: number) => void;
 }) => {
     const [searchInput, setSearchInput] = useState(query);
     const [results, setResults] = useState<QobuzSearchResults | null>(null);
@@ -32,7 +34,7 @@ const SearchBar = ({
     const [showCard, setShowCard] = useState(false);
     const [controller, setController] = useState<AbortController>(new AbortController());
     const [isPendingDownload, startTranitionPendingDownload] = useTransition();
-
+    const [albumCountToDownload, setAlbumCountToDownload] = useState<number | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const cardRef = useRef<HTMLDivElement>(null);
 
@@ -168,6 +170,25 @@ const SearchBar = ({
                 Download Tracks
             </Button>
 
+            <Input
+                className="h-11 shrink-1 disabled:bg-muted bg-primary disabled:text-foreground text-primary-foreground hover:text-primary-foreground hover:bg-primary/90 w-30"
+                value={albumCountToDownload ?? ""}
+                onChange={(event) => {
+                    setAlbumCountToDownload(parseInt(event.currentTarget.value));
+                }}
+                placeholder="Album Count"
+            />
+            <Button
+                className="h-11 shrink-0 disabled:bg-muted bg-primary disabled:text-foreground text-primary-foreground hover:text-primary-foreground hover:bg-primary/90"
+                variant="ghost"
+                onClick={() => {
+                    if (albumCountToDownload) {
+                        onDownloadAlbums(albumCountToDownload);
+                    }
+                }}>
+                {<ArrowDownIcon />}
+                Download Albums
+            </Button>
             <AnimatePresence>
                 {showCard &&
                     searchInput.trim().length > 0 &&
