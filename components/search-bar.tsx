@@ -92,7 +92,7 @@ const SearchBar = ({
     }, [searchInput]);
 
     return (
-        <div className="flex items-center gap-2 relative">
+        <div className="flex items-center gap-2 relative flex-wrap">
             <div
                 onClick={() => inputRef.current?.focus()}
                 className="bg-background border relative sm:w-[600px] w-full tracking-wide font-semibold rounded-md flex gap-0.5 items-center py-1 px-3">
