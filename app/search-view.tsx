@@ -323,16 +323,6 @@ const SearchView = () => {
                                 console.error(error?.response.data?.error || error.message || "An error occurred.");
                             }
                         }}
-                        onDownloadTracks={async () => {
-                            try {
-                                const response = await axios.post(`/api/download-tracks`);
-                                if (response.status === 200) {
-                                    console.log("Tracks downloaded successfully");
-                                }
-                            } catch (error: any) {
-                                console.error(error?.response.data?.error || error.message || "An error occurred.");
-                            }
-                        }}
                         onDownloadAlbums={async (albumCountToDownload: number) => {
                             try {
                                 const response = await axios.post(`/api/download-albums`, {

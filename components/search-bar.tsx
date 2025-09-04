@@ -17,7 +17,6 @@ const SearchBar = ({
     setSearching,
     query,
     onDownloadMetadata,
-    onDownloadTracks,
     onDownloadAlbums
 }: {
     onSearch: (query: string, searchFieldInput?: "albums" | "tracks") => void;
@@ -25,7 +24,6 @@ const SearchBar = ({
     setSearching: React.Dispatch<React.SetStateAction<boolean>>;
     query: string;
     onDownloadMetadata: (query: string) => void;
-    onDownloadTracks: () => void;
     onDownloadAlbums: (albumCountToDownload: number) => void;
 }) => {
     const [searchInput, setSearchInput] = useState(query);
@@ -155,21 +153,6 @@ const SearchBar = ({
                 {isPendingDownload ? <Loader2Icon className="animate-spin" /> : <ArrowDownIcon />}
                 Download Metadata
             </Button>
-
-            <Button
-                className="h-11 shrink-0 disabled:bg-muted bg-primary disabled:text-foreground text-primary-foreground hover:text-primary-foreground hover:bg-primary/90"
-                variant="ghost"
-                onClick={() => {
-                    startTranitionPendingDownload(() => {
-                        if (searchInput.trim().length > 0 && !isPendingDownload) {
-                            onDownloadTracks();
-                        }
-                    });
-                }}>
-                {<ArrowDownIcon />}
-                Download Tracks
-            </Button>
-
             <Input
                 className="h-11 shrink-1 disabled:bg-muted bg-primary disabled:text-foreground text-primary-foreground hover:text-primary-foreground hover:bg-primary/90 w-30"
                 value={albumCountToDownload ?? ""}
