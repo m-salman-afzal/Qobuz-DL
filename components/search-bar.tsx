@@ -154,10 +154,11 @@ const SearchBar = ({
                 Download Metadata
             </Button>
             <Input
+                type="number"
                 className="h-11 shrink-1 disabled:bg-muted bg-primary disabled:text-foreground text-primary-foreground hover:text-primary-foreground hover:bg-primary/90 w-30"
                 value={albumCountToDownload ?? ""}
                 onChange={(event) => {
-                    setAlbumCountToDownload(parseInt(event.currentTarget.value));
+                    setAlbumCountToDownload(Number(event.currentTarget.value));
                 }}
                 placeholder="Album Count"
             />
