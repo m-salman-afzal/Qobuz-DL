@@ -11,6 +11,7 @@ A web-based music downloader for Qobuz with a modern UI and database storage for
 
 ## Getting Started
 
+Before you can use Qobuz-DL, you need to change the .env file in the root directory. The default configuration will NOT work. QOBUZ_APP_ID and QOBUZ_SECRET must be set to the correct values. To find these you can use [this tool](https://github.com/QobuzDL/Qobuz-AppID-Secret-Tool). Additionally, in order to download files longer than 30 seconds, a valid Qobuz token is needed. This can be found in the localuser.token key of localstorage on the official [Qobuz website](https://play.qobuz.com/) for any paying members.
 ### Prerequisites
 
 - Node.js 18+ 
